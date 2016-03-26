@@ -59,7 +59,7 @@ sortresult.information=cellwithfactor;
 %% carry out strategy on sorted portfolio %% roc wma ema vma macd s_r k_d obv 2 5  5 10  20 50  50 75
 fma = 5; sma =10;year=1;short=0;
 para ={fma, sma, year,short};% fma, sma, year,short
-filename = 'ma_result_5_10_1_0_noadj.xls';% write in xls
+filename = 'ma_result_5_10_1_0.xls';% write in xls
 %[ result ] = strategydemo_tech( futures_series,para,rf ); %% individual
 % on sorted portfolios
 [ sortresult.vlm.table ] = strategydemo_tech( sortresult.vlm.rslt,para,rf );
@@ -90,5 +90,54 @@ filename = 'ma_result_5_10_1_0_noadj.xls';% write in xls
 [alpha1,rsquare1,pvalue1] = capm_alpha(mon_ret1,[mktfactors,],rf);% fama french 
 [alpha2,rsquare2,pvalue2] = capm_alpha(mon_ret2,[mktfactors,],rf);
 [yes] = alphawrite([alpha1;alpha2],[rsquare1,rsquare1],[pvalue1,pvalue1],3);
+%% extract month data to mrslt
+monpara = 5;  % [5/~5] [week/month]
+[ sortresult.vlm.monrslt] = extractdata( sortresult.vlm.rslt,monpara);
+[ sortresult.vltlt.monrslt] = extractdata( sortresult.vltlt.rslt,monpara);
+[ sortresult.openinst.monrslt] = extractdata( sortresult.openinst.rslt,monpara);
+[ sortresult.lastmon.monrslt] = extractdata( sortresult.lastmon.rslt,monpara);
+[ sortresult.sixmonth.monrslt] = extractdata( sortresult.sixmonth.rslt,monpara);
+[ sortresult.sixtymonth.monrslt] = extractdata( sortresult.sixtymonth.rslt,monpara);
+%% carry out strategy on sorted portfolio by month frequency%% roc wma ema vma macd s_r k_d obv 2 5  5 10  20 50  50 75
+fma = 2; sma =5;year=1;short=0;
+para ={fma, sma, year,short};% fma, sma, year,short
+filename = 'ma_result_5_10_1_1.xls';% write in xls
+%[ result ] = strategydemo_tech( futures_series,para,rf ); %% individual
+% on sorted portfolios
+[ sortresult.vlm.table ] = strategydemo_tech( sortresult.vlm.monrslt,para,rf );
+[ sortresult.openinst.table ] = strategydemo_tech( sortresult.openinst.monrslt,para,rf );
+[ sortresult.vltlt.table ] = strategydemo_tech( sortresult.vltlt.monrslt,para,rf );
+[ sortresult.lastmon.table ] = strategydemo_tech( sortresult.lastmon.monrslt,para,rf );
+[ sortresult.sixmonth.table ] = strategydemo_tech( sortresult.sixmonth.monrslt,para,rf );
+[ sortresult.sixtymonth.table ] = strategydemo_tech( sortresult.sixtymonth.monrslt,para,rf );
+[yes] = resultreport(sortresult,filename,'roc');
+[yes] = resultreport(sortresult,filename,'ema');
+[yes] = resultreport(sortresult,filename,'wma');
+[yes] = resultreport(sortresult,filename,'s_r');
+[yes] = resultreport(sortresult,filename,'macd');
+[yes] = resultreport(sortresult,filename,'vma');
+[yes] = resultreport(sortresult,filename,'k_d');
+[yes] = resultreport(sortresult,filename,'obv');
+%% 1/n strategy
+[sortresult.vlm.table.n_1]=naive_n(sortresult.vlm.table,rf,year);
+[sortresult.vltlt.table.n_1]=naive_n(sortresult.vltlt.table,rf,year);
+[sortresult.openinst.table.n_1]=naive_n(sortresult.openinst.table,rf,year);
+[sortresult.lastmon.table.n_1]=naive_n(sortresult.lastmon.table,rf,year);
+[sortresult.sixmonth.table.n_1]=naive_n(sortresult.sixmonth.table,rf,year);
+[sortresult.sixtymonth.table.n_1]=naive_n(sortresult.sixtymonth.table,rf,year);
+[yes] = resultreport(sortresult,filename,'n_1');
+%% compare with the result with N A N(2014) paper
+load 'beforestrategy_individual.mat';
+load 'factors_new.mat';
+[ result,analysisresult  ] = longandshort( futures_series,1,rf);
+%% bootstraping 
+[ bootstrap_result,mean,shpratio ] = bootstrap(sortresult,{5,10,1,0,1000});
+[table,ptable] = auto_correlation(sortresult,10);
+a.table=cell(1001,1);
+a.ptable = cell(1001,1);
+for i=1:1001
+[a.table{i,1},a.ptable{i,1}] = auto_correlation(bootstrap_result{i,1},10);
+end;
+
 end
 

@@ -5,7 +5,7 @@ function [ result ] = strategydemo_tech( futures_series_plus,para,rf )
 wmapara = para{1}; % ma(mapara)
 emapara = para{1};
 roc_n = para{1}; % short:1 only long:0
-year = para{3};  % year:1   month:0
+year = para{3};  % year:1   month:0   using month data trading:2
 short = para{4};
 %% extract parameter %% vma macd s_r
 fmapara = para{1}; % ma(fast mapara)

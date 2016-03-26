@@ -11,6 +11,10 @@ if hang<mapara+kdjpara+1 || hang==mapara+kdjpara+1
     disp('error');
     return;
 end;
+if mapara<2
+    disp('error');
+    return;
+end;
 for i=1:mapara+kdjpara
     newret(i,1)=0;
 end;

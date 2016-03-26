@@ -18,6 +18,24 @@ for i=1:num_f
     cumret=endprice/initialprice-1;
     tableone(i,:)=[startdate,initialprice,enddate,endprice,cumret];
 end;
+%%  make table 1  %% summary statitics
+[num_f,~]=size(futures_series);
+tableone = ones(num_f,5);
+for i=1:num_f
+    temp = futures_series{i,2};
+    [hang,lie] = size(temp);
+    tableone(i,1)=252*mean(temp);
+    tableone(i,2)=sqrt(252)*std(temp);
+    tableone(i,3)=skewness(temp);
+    tableone(i,4)=kurtosis(temp);
+    if hang<11
+        temp = [temp;0;0];
+    end;
+    [h,~,stat]=adftest(temp);
+    tableone(i,5)=stat;
+    tableone(i,6)=mean(futures_series{i,1}(:,5));%trading volume
+    tableone(i,7)=mean(futures_series{i,1}(:,6));%open interest
+end;
 %% tongjitianshu
 [hang,~]=size(sortresult.information);
 months = zeros(145,hang)
@@ -132,10 +150,11 @@ xlswrite(filename,temp.table,sheet,'J3');
 xlswrite(filename,result.bah.table,sheet,'B3');
 %% 
 %% strategy carried out
-load factors.mat;
+load factors_new.mat;
 fma = 5; sma =10;year=1;short=0;
 para ={fma, sma, year,short};% fma, sma, year,short
 filename = 'ma_result_5_10_1_0_pre2008.xls';% write in xls
+%filename = 'ma_result_indi_5_10_1_1.xls';% write in xls
 %[ result ] = strategydemo_tech( futures_series,para,rf ); %% individual
 % on sorted portfolios
 sortresult=sortresult1;
@@ -153,6 +172,7 @@ sortresult.sixtymonth.table.vma.table=0;
 sortresult.sixtymonth.table.k_d.table=0;
 sortresult.sixtymonth.table.obv.table=0;
 sortresult.sixtymonth.table.bah.table=0;
+sortresult.sixtymonth.table.n_1.table=0;
 %[ sortresult.sixtymonth.table ] = strategydemo_tech( sortresult.sixtymonth.rslt,para,rf );
 [yes] = resultreport(sortresult,filename,'roc');
 [yes] = resultreport(sortresult,filename,'ema');
@@ -162,7 +182,9 @@ sortresult.sixtymonth.table.bah.table=0;
 [yes] = resultreport(sortresult,filename,'vma');
 [yes] = resultreport(sortresult,filename,'k_d');
 [yes] = resultreport(sortresult,filename,'obv');
+[yes] = resultreport(sortresult,filename,'n_1');
 filename = 'ma_result_5_10_1_0_aft2008.xls';% write in xls
+sortresult=sortresult2;
 %[ result ] = strategydemo_tech( futures_series,para,rf ); %% individual
 % on sorted portfolios
 sortresult=sortresult2;
@@ -180,6 +202,7 @@ sortresult=sortresult2;
 [yes] = resultreport(sortresult,filename,'vma');
 [yes] = resultreport(sortresult,filename,'k_d');
 [yes] = resultreport(sortresult,filename,'obv');
+[yes] = resultreport(sortresult,filename,'n_1');
 %%
 [ para ] = tubiao_boxplot1( sortresult,1,'roc' );
 [ para ] = tubiao_boxplot2( sortresult,1,'roc' );
@@ -208,16 +231,43 @@ sortresult=sortresult2;
 [ para ] = tubiao_boxplot1( sortresult,1,'bah' );
 [ para ] = tubiao_boxplot2( sortresult,1,'bah' );
 [ para ] = tubiao_boxplot3( sortresult,1,'bah' );
-
+%% make scatter plot
 x=[sortresult.vlm.table.k_d.cum{1,1};sortresult.vlm.table.k_d.cum{2,1};sortresult.vlm.table.k_d.cum{3,1}];
 y=[mktfactors;mktfactors;mktfactors];
 scatter(x,y);
 
-
 x=sortresult.vlm.table.wma.cum{1,1};
 y=mktfactors;
 scatter(x,y);
-
+%% find the longest time series
+[hang,~] = size(futures_series);
+n=0;
+mark=[];
+for i=1:hang
+    [temp,~]=size(result{i,3});
+    if temp==144
+        n=n+1;
+        mark=[mark;i];
+    end;
+end;
+future_series = cell(n,4);
+n1=0;
+for i=1:hang
+    [temp,~]=size(result{i,3});
+    if temp==144
+        n1=n1+1;
+        future_series(n1,:)=futures_series(i,:);
+    end;
+end;
+%% statistics the auto-correlation of the bootstrap result
+[hang,~]=size(bootstrap_result);
+tables = cell(hang,1);
+ptables = cell(hang,1);
+for i=1:hang
+    [table,ptable] = auto_correlation(bootstrap_result{1,1},10);
+    tables{i,1} = table;
+    ptables{i,1} = ptable;
+end;
 
 end
 
